@@ -11,10 +11,11 @@ from cheshire_cat_api import CatClient, Config
 
 class CheshireCatClient:
 
-    def __init__(self, base_url: str, port: int, user_id: str, message_callback: Callable):
+    def __init__(self, protocol: str, base_url: str, port: int, token: str, user_id: str, message_callback: Callable):
         self.user_id = user_id
-
-        self.ws_url = f"ws://{base_url}:{port}/ws/{user_id}"
+        self.ws_url = f"{protocol}://{base_url}:{port}/ws/{user_id}"
+        if token:
+            self.ws_url+=f"?token={token}"
         self.session: Optional[ClientSession] = None
         self.ws: Optional[ClientWebSocketResponse] = None
         # Callback che verrà chiamata quando arriva un messaggio

@@ -87,7 +87,7 @@ class AccessControl:
 class MeowgramBot:
 
     def __init__(
-        self, api_id: str, api_hash: str, bot_token: str, cat_url: str, cat_port: int
+        self, api_id: str, api_hash: str, bot_token: str, cat_url: str, cat_port: int, cat_ws_protocol: str, cat_ws_token: str 
     ):
         self.client = TelegramClient('meowgram_bot', api_id, api_hash)
         self.bot_token = bot_token
@@ -95,6 +95,8 @@ class MeowgramBot:
 
         self.cat_url = cat_url
         self.cat_port = cat_port
+        self.cat_ws_protocol = cat_ws_protocol
+        self.cat_ws_token = cat_ws_token
         self.cat_connections: Dict[int, CheshireCatClient] = {}
         self.last_typing_action = {}
 
@@ -376,8 +378,10 @@ class MeowgramBot:
         # Create a new connection if one does not exist
         if not cat_client:
             cat_client = CheshireCatClient(
+                self.cat_ws_protocol,
                 self.cat_url,
                 self.cat_port,
+                self.cat_ws_token,
                 user_id,
                 lambda msg: self.dispatch_cat_message(user_id, msg)
             )
