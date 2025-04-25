@@ -114,7 +114,7 @@ class MeowgramBot:
         """Decorator to check if the user is allowed to use the bot"""
         async def wrapper(self, event, *args, **kwargs):
             if not self.access_control.is_user_allowed(event._sender):
-                await event.reply("You are not allowed to use this bot.")
+                await event.reply(os.getenv("BOT_REPLY_USER_NOT_ALLOWED", "You are not allowed to use this bot."))
                 raise StopPropagation
             return await func(self, event, *args, **kwargs)
         return wrapper
@@ -143,7 +143,7 @@ class MeowgramBot:
             match command:
                 case "/start":
                     menu = self.menu_manager.get_keyboard("main")
-                    await event.reply("Welcome to Meowgram! How can I help you today?", buttons=menu)
+                    await event.reply(os.getenv("BOT_REPLY_WELCOME", "Welcome to Meowgram! How can I help you today?"), buttons=menu)
                     self.menu_manager.set_current_menu(event.sender_id, "main")
         except Exception as e:
             from traceback import print_exc
