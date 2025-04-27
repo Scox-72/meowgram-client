@@ -71,7 +71,7 @@ class AccessControl:
         if self.access_type == AccessType.WHITELIST:
             allowed = user_id in self.users
             if not allowed:
-                logging.warning("User is not whitelisted. Refusing access.")
+                logging.warning(f"User is not whitelisted. Refusing access to userd_id {user_id}")
             return allowed
 
         if self.access_type == AccessType.BLACKLIST:
