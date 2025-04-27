@@ -393,7 +393,7 @@ class MeowgramBot:
 
             if not (await cat_client.connect()):
                 self.logger.error("Failed to connect to Cheshire Cat")
-                await self.client.send_message(user_id, "Failed to connect to Cheshire Cat. Please try again later.")
+                await self.client.send_message(user_id, os.getenv("BOT_REPLY_FAILED_TO_CONNECT_CHESHIRE", "Failed to connect to Cheshire Cat. Please try again later."))
                 return None
                 
         return self.cat_connections[user_id]
