@@ -43,7 +43,8 @@ class AccessType(Enum):
 @dataclass
 class AccessControl:
     access_type: AccessType
-    users: Set[int]
+    users_id: Set[int]
+    users_names: Set[str]
 
     def __post_init__(self):
         try:
@@ -60,24 +61,25 @@ class AccessControl:
             return False
 
         user_id = sender.id
+        user_name = sender.username
 
-        logging.debug(f"Checking user {user_id} against {self.access_type}")
-        logging.debug(f"Users: {self.users}")
+        logging.debug(f"Checking user_id {user_id} or user_name {user_name} against {self.access_type}")
+        logging.debug(f"Users: {self.users_id} AND {self.users_names}")
 
         if self.access_type == AccessType.ALL:
             logging.debug("All users are allowed.")
             return True
 
         if self.access_type == AccessType.WHITELIST:
-            allowed = user_id in self.users
+            allowed = ((user_id in self.users_id) or (user_name in self.users_names))
             if not allowed:
-                logging.warning(f"User is not whitelisted. Refusing access to userd_id {user_id}")
+                logging.warning(f"User is not whitelisted. Refusing access to user_id {user_id} with username {user_name}")
             return allowed
 
         if self.access_type == AccessType.BLACKLIST:
-            allowed = user_id not in self.users
+            allowed = (user_id not in self.users_id) and (user_name not in self.users_names)
             if not allowed:
-                logging.warning(f"User {user_id} is blacklisted. Refusing access.")
+                logging.warning(f"User is blacklisted. Refusing access to user_id {user_id} with username {user_name}")
             return allowed
         
         logging.warning(f"Unknown access type: {self.access_type}. Refusing access.")
@@ -87,7 +89,7 @@ class AccessControl:
 class MeowgramBot:
 
     def __init__(
-        self, api_id: str, api_hash: str, bot_token: str, cat_url: str, cat_port: int, cat_ws_protocol: str, cat_ws_token: str 
+        self, api_id: str, api_hash: str, bot_token: str, cat_url: str, cat_port: int, cat_secure_connection: bool, cat_ws_token: str 
     ):
         self.client = TelegramClient('meowgram_bot', api_id, api_hash)
         self.bot_token = bot_token
@@ -95,14 +97,18 @@ class MeowgramBot:
 
         self.cat_url = cat_url
         self.cat_port = cat_port
-        self.cat_ws_protocol = cat_ws_protocol
+        if cat_secure_connection:
+            self.cat_ws_protocol = "wss"
+        else:
+            self.cat_ws_protocol = "ws"
         self.cat_ws_token = cat_ws_token
         self.cat_connections: Dict[int, CheshireCatClient] = {}
         self.last_typing_action = {}
 
         self.access_control = AccessControl(
             access_type=os.getenv("ACCESS_TYPE", "all"),
-            users=[int(id) for id in os.getenv("ACCESS_LIST", "").split(",")],
+            users_id=[int(id) for id in os.getenv("ACCESS_LIST", "").split(",")],
+            users_names=[str(username) for username in os.getenv("USERNAME_ACCESS_LIST", "").split(",")]
         )
         self.menu_manager = MenuManager()
 
@@ -115,7 +121,7 @@ class MeowgramBot:
         async def wrapper(self, event, *args, **kwargs):
             if not self.access_control.is_user_allowed(event._sender):
                 await event.reply(os.getenv("BOT_REPLY_USER_NOT_ALLOWED", "You are not allowed to use this bot."))
-                raise StopPropagation
+                raise StopPropagaAccessControltion
             return await func(self, event, *args, **kwargs)
         return wrapper
 
@@ -129,7 +135,7 @@ class MeowgramBot:
         except (Exception, BaseException) as e:
             from traceback import print_exc
             print_exc()
-            logging.error(f"An error occurred handling the menu `{current_menu}`: {str(e)}")
+            logging.error(f"An erAccessControlror occurred handling the menu `{current_menu}`: {str(e)}")
             handled = True
 
         if handled:
